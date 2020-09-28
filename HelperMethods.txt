@@ -1,0 +1,328 @@
+*************************************************************************************************************
+String Replace Code:
+
+String s ="[[759, 1388], [759, 1388]]";
+String s1 = s.replace("[", "").replace("]", "");
+String[] s2=s1.split(",");
+for(int i=0;i<s2.length;i++)
+{
+System.out.println("Array"+s2[i]);
+}
+
+*************************************************************************************************************
+Execution Time Calculation:
+
+private double totalTimeTaken;
+long startTime = System.currentTimeMillis();
+double timeTaken = (System.currentTimeMillis() - startTime)/(double)1000;
+totalTimeTaken += timeTaken;
+
+*************************************************************************************************************
+Current TimeStamp Calculation:
+
+Date date = new Date();
+DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
+String time=dateFormat.format(date).toString().replace("-", "");
+System.out.println(time);
+*************************************************************************************************************
+CSV File creation: 
+
+package JDBC;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+public class CreateCSV
+{
+    private String fileName;
+    private boolean append;
+    private PrintWriter out;    
+    public CreateCSV(String fileName, boolean append)
+    {
+        this.fileName = fileName;
+        this.append = append;
+    }   
+    public void openFile()
+    {
+        try{
+            out = new PrintWriter(new BufferedWriter(new FileWriter(new File(fileName),append)));
+         }catch(Exception e){
+            e.printStackTrace();
+	 }
+    }
+    public void writeFile(String currentLine)
+    {
+                out.println(currentLine);  
+    }
+    public void closeFile()
+    {   
+        out.flush();
+        out.close();
+    }   
+    /* public void spoolFile(ArrayList<String> lines){
+    
+    for(String line : lines )
+        writeFile(line);
+    
+}
+
+public void spoolFile(ArrayList<String> lines, String append){
+
+    for(String line : lines ){
+        String nLine = append +line;
+        writeFile(nLine);
+    }
+}
+*/  
+}
+
+*************************************************************************************************************
+JDBC connectivity :
+package JDBC;
+import java.sql.*;
+import java.util.*;
+
+public class JDBCUtility{
+	
+	
+	private String url,userID, pwd,header,fileName;
+	private Connection con;
+
+	public JDBCUtility(String url, String userID, String pwd) throws Exception{
+		
+		this.url = url;
+		this.userID = userID;
+		this.pwd = pwd;
+		setConnection();
+            
+	}
+	public void setHeader(String header){
+		
+		this.header = header;
+	}
+	
+	public void setFileName(String fileName){
+		
+		this.fileName = fileName;
+	}
+	public ArrayList collectData(String sql) throws Exception{
+		
+		ArrayList<String> al = new ArrayList();
+		Statement smt = con.createStatement();
+		
+		ResultSet rs = smt.executeQuery(sql);
+		ResultSetMetaData rsmd=rs.getMetaData();
+		int noOfColumns = rsmd.getColumnCount();
+		while (rs.next()){
+			
+			StringBuffer row = new StringBuffer();
+			
+			for (int i=1; i< noOfColumns;i++){
+				
+				row.append(rs.getString(i).trim());row.append(",");					
+			}
+			row.append (rs.getString(noOfColumns).trim());
+			al.add(row.toString());
+		}
+		rs.close();
+		smt.close();
+		return al;	
+	}
+
+	public int collectInt(String sql) throws Exception{
+	int var=0;String al;
+		Statement smt = con.createStatement();
+		
+		ResultSet rs = smt.executeQuery(sql);
+		ResultSetMetaData rsmd=rs.getMetaData();
+		int noOfColumns = rsmd.getColumnCount();
+		while (rs.next()){
+			
+			StringBuffer row = new StringBuffer();
+			
+			for (int i=1; i< noOfColumns;i++){
+				
+				row.append(rs.getString(i).trim());row.append(",");					
+			}
+			row.append (rs.getString(noOfColumns).trim());
+			al=(row.toString());
+			var=Integer.parseInt(al);
+		}
+		rs.close();
+		smt.close();
+		return var;	
+	}
+public String collectString(String sql) throws Exception
+{	
+		String al="0",tmp;int i=0;
+		Statement smt = con.createStatement();
+		ResultSet rs = smt.executeQuery(sql);
+		ResultSetMetaData rsmd=rs.getMetaData();
+		int noOfColumns = rsmd.getColumnCount();
+		while (rs.next())
+			{
+				
+				StringBuffer row = new StringBuffer();
+				
+				for (i=1; i< noOfColumns;i++){
+					
+					row.append(rs.getString(i));row.append(",");	
+					
+				}
+				
+				row.append (rs.getString(noOfColumns));
+				al=row.toString();
+				
+		}
+		rs.close();
+		smt.close();
+		return al;	
+	}
+	public void getData(String sql) throws Exception
+	{
+		CreateCSV csv = new CreateCSV(fileName,false);  
+        csv.openFile();
+		
+		if(header!=null)
+		csv.writeFile(header);
+		Statement smt = con.createStatement();
+		
+		ResultSet rs = smt.executeQuery(sql);
+		ResultSetMetaData rsmd=rs.getMetaData();
+		int noOfColumns = rsmd.getColumnCount();
+		
+		while (rs.next()){
+		
+			StringBuffer row = new StringBuffer();
+			
+			for (int i=1; i< noOfColumns;i++){
+				
+				row.append(rs.getString(i));row.append(",");	
+				
+			}
+			
+			row.append (rs.getString(noOfColumns));
+			
+			csv.writeFile(row.toString());			
+		}//while
+		rs.close();
+		smt.close();
+		csv.closeFile();
+	
+	}
+	
+	private void setConnection() throws Exception{
+		
+		Class.forName("oracle.jdbc.driver.OracleDriver");
+		 con =DriverManager.getConnection(url,userID, pwd);
+		 
+		
+		
+	}
+	
+}
+*********************************************************************************************************
+
+
+***********************Httpt call **************************************************
+
+package OIC_Inven;
+
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+
+public class BossATP_Adjustment 
+{
+	public static String TimeStmp,path;
+	public static void main(String[] args)throws IOException,InterruptedException
+	{
+		ReadSku();
+		System.out.println("Completed..!!!");
+	}	
+	public static void ReadSku() throws IOException, InterruptedException
+	{
+		path="F:\\sku1.txt";  //Exception Report
+		File inputFile=new File(path);int i=0;String val;
+		BufferedReader br=new BufferedReader(new FileReader(inputFile));
+		while((val=br.readLine())!=null)
+		{	
+			if(i%50==0)
+			{
+				System.out.println("SleepTime");
+				Thread.sleep(1000);
+			}
+			String arr[]=val.split(",");
+			String sku=arr[0];
+			Boss_func(sku,"20000");
+			i++;
+		}
+		System.out.println("Completed...!");
+	}
+	public static void timeStamp()
+	{
+		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
+		Calendar cal = Calendar.getInstance();
+	
+		cal.add(Calendar.HOUR, -9);
+		cal.add(Calendar.MINUTE, -30);
+		Date Ts=cal.getTime();
+		TimeStmp=dateFormat.format(Ts);
+		//TimeStmp="2019-01-24 20:41:47.047";
+	}
+	public static void Boss_func(String sku,String BossAtp) throws IOException
+	{
+		try
+		{
+		timeStamp();
+		String url="http://internal-blue-ocf-oic-dev-015.apps.gcpusc1-b.lle.ocf.kohls.com/oic/atp/enterprise/bossatp";//rel02
+		URL u = new URL(url);
+		HttpURLConnection con = (HttpURLConnection) u.openConnection();
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json");
+		con.setDoOutput(true);
+		String RegInven="{\r\n" + 
+				"\"itemID\": \""+sku+"\",\r\n" + 
+				"\"bossAtp\":"+BossAtp+",\r\n" + 
+				"\"timestamp\": \""+TimeStmp+" CDT\"\r\n" + 
+				"}";
+		byte[] online=RegInven.getBytes();		
+		DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+ 	    wr.write(online); 
+		wr.flush();
+		wr.close();
+		int responseCode = con.getResponseCode();
+		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+		String inputLine;
+		StringBuilder response = new StringBuilder();
+		while((inputLine = in.readLine()) != null) 
+		{
+			response.append(inputLine);
+		}
+		in.close();
+		String arr[]=response.toString().split(",");
+		if(arr[0].equals("{\"status\":200"))
+		{
+			System.out.println("Success      : "+sku);
+		}
+		else
+		{
+			System.out.println("Not completed: "+sku);
+		}	
+	}
+	catch(Exception E)
+	{
+		System.out.println("Error..!!"+E);
+	}
+	}
+}
